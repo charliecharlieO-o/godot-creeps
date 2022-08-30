@@ -3,10 +3,11 @@ extends Area2D
 signal hit
 
 export var speed = 400
+var OS_NAME = OS.get_name()
+var target = Vector2() # Stores the clicked/touched position
 var screen_size
 
-func process_input() -> Vector2:
-	var velocity = Vector2.ZERO
+func process_key_input(velocity: Vector2):
 	if Input.is_action_pressed("move_right"):
 		velocity.x += 1
 	if Input.is_action_pressed("move_left"):
@@ -16,6 +17,18 @@ func process_input() -> Vector2:
 	if Input.is_action_pressed("move_down"):
 		velocity.y += 1
 	return velocity
+
+func process_touch_input(velocity: Vector2):
+	if position.distance_to(target) > 10:
+		return target - position
+	return Vector2.ZERO
+
+func process_input() -> Vector2:
+	var velocity = Vector2.ZERO
+	if OS_NAME == "OSX" or OS_NAME == "Windows":
+		return process_key_input(velocity)
+	else:
+		return process_touch_input(velocity)
 
 func update_animation(velocity):
 	if velocity.x != 0:
@@ -29,8 +42,14 @@ func update_animation(velocity):
 
 func start(pos):
 	position = pos
+	target = pos # Initial "target" is the start position
 	show()
 	$CollisionShape2D.disabled = false
+
+# Change the target whenever a touch event happens
+func _input(event):
+	if event is InputEventScreenTouch and event.pressed:
+		target = event.position
 
 func _ready():
 	screen_size = get_viewport_rect().size
